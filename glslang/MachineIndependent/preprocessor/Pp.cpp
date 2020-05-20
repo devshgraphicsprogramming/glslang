@@ -1180,6 +1180,7 @@ int TPpContext::tZeroInput::scan(TPpToken* ppToken)
 //
 MacroExpandResult TPpContext::MacroExpand(TPpToken* ppToken, bool expandUndef, bool newLineOkay)
 {
+    bool oldSpaceState = ppToken->space;
     ppToken->space = false;
     int macroAtom = atomStrings.getAtom(ppToken->name);
     switch (macroAtom) {
@@ -1215,8 +1216,10 @@ MacroExpandResult TPpContext::MacroExpand(TPpToken* ppToken, bool expandUndef, b
         return MacroExpandNotStarted;
 
     // not expanding undefined macros
-    if ((macro == nullptr || macro->undef) && ! expandUndef)
+    if ((macro == nullptr || macro->undef) && !expandUndef) {
+        ppToken->space = oldSpaceState;
         return MacroExpandNotStarted;
+    }
 
     // 0 is the value of an undefined macro
     if ((macro == nullptr || macro->undef) && expandUndef) {

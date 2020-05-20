@@ -1079,7 +1079,9 @@ struct DoPreprocessing {
                     EShOptimizationLevel, EShMessages)
     {
         // This is a list of tokens that do not require a space before or after.
-        static const std::string unNeededSpaceTokens = ";)[]";
+        static const std::string unNeededSpaceTokensConditional = "()";
+        static const std::string unNeededSpaceTokens = ";[]";
+        static const std::string unNeededSpaceTokensLast = ";()[]";
         static const std::string noSpaceBeforeTokens = ",";
         glslang::TPpToken ppToken;
 
@@ -1173,7 +1175,8 @@ struct DoPreprocessing {
             // and consistency.
             if (!isNewString && !isNewLine && lastToken != EndOfInput &&
                 (unNeededSpaceTokens.find((char)token) == std::string::npos) &&
-                (unNeededSpaceTokens.find((char)lastToken) == std::string::npos) &&
+                (ppToken.space || unNeededSpaceTokensConditional.find((char)token) == std::string::npos) &&
+                (unNeededSpaceTokensLast.find((char)lastToken) == std::string::npos) &&
                 (noSpaceBeforeTokens.find((char)token) == std::string::npos)) {
                 outputBuffer += ' ';
             }
