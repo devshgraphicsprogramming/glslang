@@ -1,0 +1,32 @@
+#version 460
+#extension GL_DEVSH_coroutine_shader : enable
+
+// there could be a special token called `gl_NoContinuationDEVSH`, not sure if I should expose it because its literally the equivalent of calling `pthread_exit` (bailing in the middle of a callstack)
+void fibonacci(uint argument)
+{
+  if (argument<2)
+    return argument; // a normal return will perform an equivalent to `continueCoroutineDEVSH(continuationOfContinuation(gl_IntendedContinuationDEVSH),gl_IntendedContinuationDEVSH)`
+
+  uint arg1 = argument-1u;
+  uint arg2 = argument-2u;
+
+  // all 3 types are convertible to `executableDEVSH` and they represent a coroutine payload <intended continuation, arguments, return address>
+  // an awaitable is different to an enqueable in that it has an associated atomic counter which needs to reach 0 before it can become an enqueueable
+  // Only the first two parameters, the intended continuation and the immediate coroutine are required, the rest are optional and dictate the values
+  // with which the newly allocated or reused payloads are initialized.
+  // [optional] third argument until penultimate: parameters to the coroutine to execute
+  // [optional] last argument: address to write the return value of the coroutine
+  awaitableDEVSH done = allocateAwaitableDEVSH(gl_IntendedContinuationDEVSH,coroutineDEVSH(fibonacci_postlude));
+  enqueueableDEVSH f2 = allocateEnqueueableDEVSH(done,coroutineDEVSH(fibonacci),arg2,done.argumentStorage+sizeof(uint));
+  //! After the first `moveContinuableDEVSH` there can be no more access to the payload, so no more calls other than `enqueueCoroutine` and `continueCoroutine`
+  continuableDEVSH f1 = moveContinuableDEVSH(done,coroutineDEVSH(fibonacci),arg1,done.argumentStorage);
+
+  //! After the first `enqueueCoroutine` only `enqueueCoroutine` and `continueCoroutine` expressions are allowed
+  enqueueCoroutineDEVSH(f2);
+  continueCoroutineDEVSH(f1); //! continue needs to be the very last expression in the function
+}
+
+uint fibonacci_postlude(uint result1, uint result2)
+{
+  return result1+result2;
+}

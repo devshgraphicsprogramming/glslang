@@ -1,8 +1,0 @@
-#version 460
-#extension GL_DEVSH_coroutine_shader : enable
-
-// TODO
-- BxDF raygen coroutines
-- BxDF remainder_and_pdf coroutines
-- overall coroutine for raygen
-- overall coroutine for remainder_and_pdf
