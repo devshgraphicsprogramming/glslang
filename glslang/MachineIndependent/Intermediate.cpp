@@ -2298,6 +2298,10 @@ TOperator TIntermediate::mapTypeToConstructorOp(const TType& type) const
     case EbtReference:
         op = EOpConstructReference;
         break;
+
+    case EbtAccStruct:
+        op = EOpConstructAccStruct;
+        break;
 #endif
     default:
         break;
@@ -2866,7 +2870,7 @@ void TIntermediate::addToCallGraph(TInfoSink& /*infoSink*/, const TString& calle
             return;
     }
 
-    callGraph.push_front(TCall(caller, callee));
+    callGraph.emplace_front(caller, callee);
 }
 
 //
