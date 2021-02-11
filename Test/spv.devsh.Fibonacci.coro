@@ -1,15 +1,25 @@
 #version 460
 #extension GL_DEVSH_coroutine_shader : enable
 
+// only one such declaration can be present in the shaders making up the pipeline
+layout(payload_size=12) in;
+
 // there could be a special token called `gl_NoContinuationDEVSH`, not sure if I should expose it because its literally the equivalent of calling `pthread_exit` (bailing in the middle of a callstack)
-void fibonacci(uint argument)
+void fibonacci()
 {
+  uint destinationAddress = readPayloadDEVSH(gl_PayloadDEVSH,0u);
+  uint argument = readPayloadDEVSH(gl_PayloadDEVSH,4u);
   if (argument<2)
-    return argument; // a normal return will perform an equivalent to `continueCoroutineDEVSH(continuationOfContinuation(gl_IntendedContinuationDEVSH),gl_IntendedContinuationDEVSH)`
+  {
+    writePayloadDEVSH(gl_IntendedContinuationDEVSH.payload,destinationAddress,result1+result2);
+    return; // a normal return will perform an equivalent to `continueCoroutineDEVSH(gl_IntendedContinuationDEVSH.executable)`
+  }
 
   uint arg1 = argument-1u;
   uint arg2 = argument-2u;
 
+
+  // TODO: redo stuff after this line
   // all 3 types are convertible to `executableDEVSH` and they represent a coroutine payload <intended continuation, arguments, return address>
   // an awaitable is different to an enqueable in that it has an associated atomic counter which needs to reach 0 before it can become an enqueueable
   // Only the first two parameters, the intended continuation and the immediate coroutine are required, the rest are optional and dictate the values
@@ -26,7 +36,10 @@ void fibonacci(uint argument)
   continueCoroutineDEVSH(f1); //! continue needs to be the very last expression in the function
 }
 
-uint fibonacci_postlude(uint result1, uint result2)
+void fibonacci_postlude()
 {
-  return result1+result2;
+  uint destinationAddress = readPayloadDEVSH(gl_PayloadDEVSH,0u);
+  uint result1 = readPayloadDEVSH(gl_PayloadDEVSH,4u);
+  uint result2 = readPayloadDEVSH(gl_PayloadDEVSH,8u);
+  writePayloadDEVSH(gl_IntendedContinuationDEVSH.payload,destinationAddress,result1+result2);
 }
